@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>My location-based app</title>
+    </head>
+    <body>
+        <h1>My location-based app</h1>
+        <p>This is a web app created for educational purposes.</p>
+        <h2>My location information</h2>
+        <p>This section will display the user's current location.</p>
+
+
+    <button onclick="getLocation()">What's my location?</button>
+
+    <p id="latitude"></p>
+    <p id="longitude"></p>
+
+    </body>
+
+    <script>
+
+    function showPosition(position) {
+        console.log(position);
+        var lat = document.getElementById("latitude");
+        var lon = document.getElementById("longitude");
+        lat.innerHTML = "Latitude: " + position.coords.latitude;
+        lon.innerHTML = "Longitude: " + position.coords.longitude;
+    }
+
+    function getLocation() {
+        navigator.geolocation.getCurrentPosition(showPosition);
+    }
+
+
+    </script>
+
+</html>
