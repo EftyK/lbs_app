@@ -12,15 +12,25 @@
 
     <button onclick="getLocation()">What's my location?</button>
 
+    <button onclick="monitorLocation()">Monitor my location</button>
+
+    <button onclick="stopMonitoringLocation()">Stop watching me</button>
+
+    <br><br>
+
+    <button onclick="restoreLocation()">Restore my previous location</button>
+
+
     <p id="latitude"></p>
     <p id="longitude"></p>
     <p id="altitude"></p>
     <p id="speed"></p>
     <p id="heading"></p>
 
-    </body>
 
     <script>
+    var id;
+
 
     function showPosition(position) {
         console.log(position);
@@ -34,6 +44,32 @@
         alt.innerHTML = "Altitude: " + position.coords.altitude;
         speed.innerHTML = "Speed: " + position.coords.speed;
         heading.innerHTML = "Heading: " + position.coords.heading;
+
+        saveLocation(position.coords.latitude, position.coords.longitude);
+    }
+
+
+    function saveLocation(latitude, longitude) {
+        localStorage.setItem("latitude", latitude);
+        localStorage.setItem("longitude", longitude);
+        // localStorage.setItem("coordinates", [latitude, longitude]);
+    }
+
+    function restoreLocation() {
+        var lat = document.getElementById("latitude");
+        var lon = document.getElementById("longitude");
+
+        lat.innerHTML = "Latitude: " + localStorage.getItem("latitude");
+        lon.innerHTML = "Longitude: " + localStorage.getItem("longitude");
+    }
+
+    function monitorLocation() {
+        id = navigator.geolocation.watchPosition(showPosition);
+    }
+
+    function stopMonitoringLocation() {
+        navigator.geolocation.clearWatch(id);
+        console.log("You are not being watched anymore");
     }
 
     function getLocation() {
@@ -42,5 +78,8 @@
 
 
     </script>
+
+    </body>
+
 
 </html>
