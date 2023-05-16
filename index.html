@@ -6,30 +6,40 @@
     <body>
         <h1>My location-based app</h1>
         <p>This is a web app created for educational purposes.</p>
+
+
+        Enable voice controls: <input type="checkbox" id="voice-control" onclick="toggleVoice()">
+
+        <br><br>
+
+        <button onclick="getLocation()">What's my location?</button>
+
+        <button onclick="monitorLocation()">Monitor my location</button>
+
+        <button onclick="stopMonitoringLocation()">Stop watching me</button>
+        <br><br>
+
+        <button onclick="restoreLocation()">Restore my previous location</button>
+
         <h2>My location information</h2>
         <p>This section will display the user's current location information.</p>
 
 
-    <button onclick="getLocation()">What's my location?</button>
-
-    <button onclick="monitorLocation()">Monitor my location</button>
-
-    <button onclick="stopMonitoringLocation()">Stop watching me</button>
-
-    <br><br>
-
-    <button onclick="restoreLocation()">Restore my previous location</button>
 
 
-    <p id="latitude"></p>
-    <p id="longitude"></p>
-    <p id="altitude"></p>
-    <p id="speed"></p>
-    <p id="heading"></p>
+        <p id="latitude"></p>
+        <p id="longitude"></p>
+        <p id="place"></p>
+        <p id="altitude"></p>
+        <p id="speed"></p>
+        <p id="heading"></p>
 
 
     <script>
+
     var id;
+    // var voice_control = false;
+    var checkBox = document.getElementById("voice-control");
 
 
     function showPosition(position) {
@@ -45,9 +55,41 @@
         speed.innerHTML = "Speed: " + position.coords.speed;
         heading.innerHTML = "Heading: " + position.coords.heading;
 
+        requestCoordinateTranslation(position.coords.latitude, position.coords.longitude);
         saveLocation(position.coords.latitude, position.coords.longitude);
     }
 
+    function requestCoordinateTranslation(latitude, longitude) {
+
+        // https://nominatim.openstreetmap.org/reverse.php?lat=51.9695583&lon=7.5958075&zoom=18&format=json
+
+        var domain = 'https://nominatim.openstreetmap.org/';
+        var operation = 'reverse.php';
+        // var lat;
+        // var lon;
+        var zoom = '18'; // building level
+        var format = 'json';
+        var url = domain + operation + "?" + "lat=" + latitude + "&lon=" + longitude + "&zoom=18&format=json";
+
+        var request = new XMLHttpRequest();
+        request.open('GET', url, true);
+
+        request.onload = function() {
+            if (request.status >= 200 && request.status < 400) {
+                // Success!
+                var data = JSON.parse(request.responseText);
+                console.log(data);
+                document.getElementById("place").innerHTML = data.display_name;
+                var place = new SpeechSynthesisUtterance("You are at " + data.display_name);
+                place.voice = 
+                speechSynthesis.speak(place);
+            } // else {
+            //     console.log("We reached our target server, but it returned an error");
+            // }
+        };
+
+        request.send();
+    }
 
     function saveLocation(latitude, longitude) {
         localStorage.setItem("latitude", latitude);
@@ -76,6 +118,69 @@
         navigator.geolocation.getCurrentPosition(showPosition);
     }
 
+    var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition
+    var recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.continuous = true;
+
+    var bye = new SpeechSynthesisUtterance("bye");
+
+
+    function speakInstructions() {
+        var instructions = new SpeechSynthesisUtterance("Hello, you can give the following commands: Find me, Watch me, Stop Watching, Restore. To exit this mode say stop listening. To repeat this menu, say repeat.");
+        speechSynthesis.speak(instructions);
+    }
+
+    function toggleVoice() {
+        // Get the checkbox
+        if (checkBox.checked == true){
+            speakInstructions();
+            recognition.start();
+            // voice_control = true;
+        } else {
+            recognition.stop();
+            speechSynthesis.speak(bye);
+            // voice_control = false;
+        }
+    } 
+
+    var i = 0;
+
+    recognition.onresult = function(event) {
+        var command = event.results[i][0].transcript.trim();
+        console.log(event.results);
+        console.log('Confidence: ' + event.results[i][0].confidence);
+        switch(command) {
+            case 'find me':
+                getLocation();
+                break;
+            case 'watch me':
+                monitorLocation();
+                break;
+            case 'stop watching':
+                stopMonitoringLocation();
+                break;
+            case 'restore':
+                restoreLocation();
+                break;
+            case 'stop listening':
+                recognition.stop();
+                speechSynthesis.speak(bye);
+                checkBox.checked = false;
+                // voice_control = false;
+                break;
+            case 'repeat':
+                speakInstructions();
+            default:
+                console.log("transcript: " + command);
+            }
+        i++;
+    }
+
+    recognition.onspeechend = function() {
+        console.log("The speaker stopped.")
+        // recognition.stop();
+    }
 
     </script>
 
